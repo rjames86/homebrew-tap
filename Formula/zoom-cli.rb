@@ -11,15 +11,14 @@ class ZoomCli < Formula
     system "npm", "install", *std_npm_args(prefix: false)
     system "npm", "run", "build"
 
-    # Install the built CLI
-    bin.install "dist/cli.js" => "zoom-cli"
+    # Install the entire package to libexec
+    libexec.install Dir["*"]
 
-    # Make sure the shebang is correct
-    inreplace "#{bin}/zoom-cli", %r{^#!/usr/bin/env node}, "#!/usr/bin/env node"
-
-    # Install the module for programmatic use
-    lib.install Dir["dist/*"]
-    lib.install "package.json"
+    # Create a wrapper script that sets up the correct paths
+    (bin/"zoom-cli").write <<~EOS
+      #!/bin/bash
+      exec "#{Formula["node"].opt_bin}/node" "#{libexec}/dist/cli.js" "$@"
+    EOS
   end
 
   test do
